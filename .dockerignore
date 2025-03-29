@@ -1,0 +1,27 @@
+# Системные файлы
+.git
+.github
+.vscode
+*.log
+*.swp
+.DS_Store
+
+# Директории зависимостей
+node_modules
+.next
+out
+
+# Файлы среды разработки
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Кэш
+.cache
+.npm
+.bun
+
+# Директории сборки
+dist
+build
