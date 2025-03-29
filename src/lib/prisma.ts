@@ -1,36 +1,36 @@
-'use client'
-
+// Prisma Client для подключения к базе данных
 import { PrismaClient } from '@prisma/client'
 
-// Глобальная переменная для поддержки единственного экземпляра
+// Declare global variable to prevent multiple instances
 declare global {
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined
+  var prismaGlobal: PrismaClient | undefined
 }
 
-// Предотвращаем создание множества экземпляров Prisma Client в режиме разработки
-// при использовании горячей перезагрузки
-
-const prismaClientSingleton = () => {
+function createPrismaClient() {
   try {
-    console.log('Инициализация Prisma Client...')
+    console.log('Создание нового экземпляра Prisma Client...')
     const client = new PrismaClient({
       log: ['query', 'error', 'warn'],
     })
-    console.log('Prisma Client успешно инициализирован!')
+    
+    // Проверяем подключение
+    client.$connect()
+      .then(() => console.log('Prisma Client успешно подключен к базе данных'))
+      .catch((err) => console.error('Ошибка подключения Prisma Client:', err))
+    
     return client
   } catch (error) {
-    console.error('Ошибка при инициализации Prisma Client:', error)
+    console.error('Ошибка при создании Prisma Client:', error)
     throw error
   }
 }
 
-export const prisma = globalThis.prisma ?? prismaClientSingleton()
+// Используем глобальный синглтон в режиме разработки для предотвращения
+// создания множества соединений при горячей перезагрузке
+const prisma = global.prismaGlobal || createPrismaClient()
+
+if (process.env.NODE_ENV !== 'production') {
+  global.prismaGlobal = prisma
+}
 
 export default prisma
-
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
-
-export const getPrismaClient = () => {
-  return prisma
-}
