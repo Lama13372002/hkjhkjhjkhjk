@@ -1,17 +1,21 @@
-import prisma from '../../../lib/prisma'
 import { NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
+
+// Создаем новый экземпляр PrismaClient только для этого API-маршрута
+// Это предотвращает проблемы с импортом экземпляра из другого файла
+const prisma = new PrismaClient({
+  log: ['query', 'error', 'warn'],
+})
 
 // GET /api/settings - Получение всех настроек сайта
 export async function GET() {
   try {
     console.log('Попытка получения настроек через Prisma...')
-
-    // Проверяем соединение с базой данных
-    if (!prisma) {
-      console.error('Prisma клиент не инициализирован')
-      return NextResponse.json({ error: 'Проблема с подключением к базе данных' }, { status: 500 })
-    }
-
+    
+    // Проверяем подключение к базе данных
+    await prisma.$connect()
+    console.log('Prisma подключен к базе данных')
+    
     const settings = await prisma.siteSettings.findMany()
     console.log('Настройки успешно получены:', settings.length)
 
@@ -25,6 +29,9 @@ export async function GET() {
   } catch (error) {
     console.error('Ошибка при получении настроек:', error)
     return NextResponse.json({ error: 'Не удалось получить настройки' }, { status: 500 })
+  } finally {
+    // Отключаемся от базы данных
+    await prisma.$disconnect()
   }
 }
 
@@ -50,12 +57,10 @@ export async function POST(request: Request) {
     if (!data || typeof data !== 'object') {
       return NextResponse.json({ error: 'Неверный формат данных' }, { status: 400 })
     }
-
-    // Проверяем соединение с базой данных
-    if (!prisma) {
-      console.error('Prisma клиент не инициализирован')
-      return NextResponse.json({ error: 'Проблема с подключением к базе данных' }, { status: 500 })
-    }
+    
+    // Подключаемся к базе данных
+    await prisma.$connect()
+    console.log('Prisma подключен к базе данных')
 
     // Обновляем только разрешенные ключи
     const updatePromises = Object.entries(data)
@@ -80,5 +85,8 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Ошибка при обновлении настроек:', error)
     return NextResponse.json({ error: 'Не удалось обновить настройки' }, { status: 500 })
+  } finally {
+    // Отключаемся от базы данных
+    await prisma.$disconnect()
   }
 }
